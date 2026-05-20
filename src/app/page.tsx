@@ -1,11 +1,69 @@
 "use client"
 
 import { FormEvent, useEffect, useRef, useState } from "react"
-import { Loader2, Send } from "lucide-react"
+import { Send } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+
+function ThinkingDots() {
+  return (
+    <div
+      aria-label="Generating sentence"
+      className="flex h-9 items-center gap-2 text-stone-500"
+      role="status"
+    >
+      <span className="h-2 w-2 animate-bounce rounded-full bg-current [animation-delay:-0.2s]" />
+      <span className="h-2 w-2 animate-bounce rounded-full bg-current [animation-delay:-0.1s]" />
+      <span className="h-2 w-2 animate-bounce rounded-full bg-current" />
+    </div>
+  )
+}
+
+function AnimatedSentence({
+  sentence,
+  shouldAnimate,
+}: {
+  sentence: string
+  shouldAnimate: boolean
+}) {
+  const characters = Array.from(sentence)
+  const [visibleCharacters, setVisibleCharacters] = useState(
+    shouldAnimate ? 0 : characters.length
+  )
+
+  useEffect(() => {
+    if (!shouldAnimate) {
+      return
+    }
+
+    const intervalId = window.setInterval(() => {
+      setVisibleCharacters((currentVisibleCharacters) => {
+        if (currentVisibleCharacters >= characters.length) {
+          window.clearInterval(intervalId)
+          return currentVisibleCharacters
+        }
+
+        return currentVisibleCharacters + 1
+      })
+    }, 35)
+
+    return () => window.clearInterval(intervalId)
+  }, [characters.length, shouldAnimate, sentence])
+
+  return (
+    <p
+      lang="ko"
+      className="font-serif text-2xl leading-relaxed text-stone-950 sm:text-2xl"
+    >
+      {characters.slice(0, visibleCharacters).join("")}
+      {shouldAnimate && visibleCharacters < characters.length ? (
+        <span className="ml-0.5 animate-pulse text-stone-500">|</span>
+      ) : null}
+    </p>
+  )
+}
 
 export default function Home() {
   const [topic, setTopic] = useState("")
@@ -73,21 +131,26 @@ export default function Home() {
           {sentences.length > 0 ? (
             <div className="space-y-10 pb-8">
               {sentences.map((generatedSentence, index) => (
-                <p
-                  key={`${generatedSentence}-${index}`}
-                  lang="ko"
-                  className="font-serif text-3xl leading-relaxed text-stone-950 sm:text-4xl"
-                >
-                  {generatedSentence}
-                </p>
+                <AnimatedSentence
+                  key={`${generatedSentence}-${index}-${
+                    index === sentences.length - 1 ? "latest" : "past"
+                  }`}
+                  sentence={generatedSentence}
+                  shouldAnimate={index === sentences.length - 1}
+                />
               ))}
+              {isLoading ? <ThinkingDots /> : null}
               <div ref={endOfSentencesRef} />
             </div>
           ) : (
             <div className="flex min-h-full items-center">
-              <p className="max-w-md font-serif text-3xl leading-relaxed text-stone-500 sm:text-4xl">
-                Enter a topic and generate a Korean sentence to study.
-              </p>
+              {isLoading ? (
+                <ThinkingDots />
+              ) : (
+                <p className="max-w-md font-serif text-2xl leading-relaxed text-stone-500 sm:text-4xl">
+                  Enter a topic and generate a Korean sentence to study.
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -112,7 +175,11 @@ export default function Home() {
                 className="h-12 w-12 shrink-0 bg-stone-900 p-0 text-white hover:bg-stone-700"
               >
                 {isLoading ? (
-                  <Loader2 className="animate-spin" />
+                  <span className="flex items-center gap-1" aria-hidden="true">
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.2s]" />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.1s]" />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current" />
+                  </span>
                 ) : (
                   <Send aria-hidden="true" />
                 )}
