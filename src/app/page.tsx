@@ -1,65 +1,124 @@
-import Image from "next/image";
+"use client"
+
+import { FormEvent, useState } from "react"
+import { Loader2 } from "lucide-react"
+
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 export default function Home() {
+  const [topic, setTopic] = useState("")
+  const [sentence, setSentence] = useState("")
+  const [error, setError] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+
+  async function generateSentence(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    const trimmedTopic = topic.trim()
+
+    if (!trimmedTopic) {
+      setError("Enter a topic first.")
+      return
+    }
+
+    setIsLoading(true)
+    setError("")
+
+    try {
+      const response = await fetch("/api/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ topic: trimmedTopic }),
+      })
+
+      const data = (await response.json()) as {
+        sentence?: string
+        error?: string
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error ?? "Could not generate a sentence.")
+      }
+
+      setSentence(data.sentence ?? "")
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Could not generate a sentence."
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#fffdf8_0,#f7f0e5_46%,#efe4d4_100%)] px-5 py-8 text-stone-950 sm:px-8">
+      <section className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-3xl flex-col justify-center">
+        <div className="border-y border-stone-300/80 py-10 sm:py-14">
+          <p className="mb-3 text-sm font-medium uppercase tracking-[0.18em] text-stone-500">
+            Korean practice
           </p>
+          <h1 className="font-serif text-4xl leading-tight text-stone-950 sm:text-5xl">
+            One sentence at a time.
+          </h1>
+
+          <form onSubmit={generateSentence} className="mt-10 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="topic" className="text-stone-700">
+                Topic
+              </Label>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Input
+                  id="topic"
+                  value={topic}
+                  onChange={(event) => setTopic(event.target.value)}
+                  placeholder="coffee, spring rain, visiting a friend"
+                  className="h-11 border-stone-300 bg-white/60 px-3 text-base shadow-none focus-visible:border-stone-600 focus-visible:ring-stone-500/20"
+                />
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="h-11 bg-stone-900 px-5 text-white hover:bg-stone-700"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="animate-spin" />
+                      Generating
+                    </>
+                  ) : sentence ? (
+                    "Another"
+                  ) : (
+                    "Generate"
+                  )}
+                </Button>
+              </div>
+            </div>
+          </form>
+
+          <div className="mt-12 min-h-40 border-l border-stone-300 pl-6">
+            {sentence ? (
+              <p lang="ko" className="font-serif text-4xl leading-relaxed">
+                {sentence}
+              </p>
+            ) : (
+              <p className="max-w-md text-base leading-7 text-stone-500">
+                Enter a topic and generate a Korean sentence to study.
+              </p>
+            )}
+          </div>
+
+          {error ? (
+            <p className="mt-6 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+              {error}
+            </p>
+          ) : null}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+      </section>
+    </main>
+  )
 }
