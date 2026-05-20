@@ -142,15 +142,16 @@ export default function Home() {
               {isLoading ? <ThinkingDots /> : null}
               <div ref={endOfSentencesRef} />
             </div>
+          ) : isLoading ? (
+            <div className="pb-8">
+              <ThinkingDots />
+              <div ref={endOfSentencesRef} />
+            </div>
           ) : (
             <div className="flex min-h-full items-center">
-              {isLoading ? (
-                <ThinkingDots />
-              ) : (
-                <p className="max-w-md font-serif text-2xl leading-relaxed text-stone-500 sm:text-4xl">
-                  Enter a topic and generate a Korean sentence to study.
-                </p>
-              )}
+              <p className="max-w-md font-serif text-2xl leading-relaxed text-stone-500 sm:text-4xl">
+                Enter a topic and generate a Korean sentence to study.
+              </p>
             </div>
           )}
         </div>
