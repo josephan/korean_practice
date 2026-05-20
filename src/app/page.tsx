@@ -163,6 +163,7 @@ export default function Home() {
             <div className="flex gap-3">
               <Input
                 id="topic"
+                autoComplete="off"
                 value={topic}
                 onChange={(event) => setTopic(event.target.value)}
                 placeholder="coffee, spring rain, visiting a friend"
